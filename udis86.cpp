@@ -31,12 +31,26 @@ Udis86_new(VALUE klass)
 	ret = Data_Make_Struct(klass, Udis86_wrap, 0, free_Udis86_wrap, wrap);
 
 	ud_init(&wrap->ud_obj);
+	ud_set_syntax(&wrap->ud_obj, UD_SYN_INTEL);	
 
 	return ret;
 }
 #define GET_WRAP \
 	Udis86_wrap* wrap; \
 	Data_Get_Struct(self, Udis86_wrap, wrap);
+
+VALUE
+Udis86_set_input(VALUE self, VALUE v_input)
+{
+	GET_WRAP;
+
+	VALUE v_input_clone = rb_str_dup_frozen(StringValue(v_input));
+	rb_iv_set(self, "@input", v_input_clone);
+
+	ud_set_input_buffer(&wrap->ud_obj, (uint8_t*)RSTRING_PTR(v_input_clone), RSTRING_LEN(v_input_clone));
+
+	return Qnil;
+}
 
 #if 0
 	Check_Type(v_srcstr, T_STRING);
@@ -48,13 +62,14 @@ Udis86_set_mode(VALUE self, VALUE v_mode)
 {
 	GET_WRAP;
 
-	unsigned long mode = FIX2ULONG(v_mode);
+	int mode = FIX2INT(v_mode);
 	switch(mode)
 	{
 	case 16:
 	case 32:
 	case 64:
 		ud_set_mode(&wrap->ud_obj, mode);
+		break;
 
 	default:
 		rb_raise(rb_eArgError, "invalid mode");
@@ -187,12 +202,14 @@ Init_udis86()
 {
 	RBK_Udis86 = rb_define_class("Udis86", rb_cObject);
 	
-	rb_define_singleton_method(RBK_Udis86, "new", (ruby_method_t)Udis86_new, 1);
+	rb_define_singleton_method(RBK_Udis86, "new", (ruby_method_t)Udis86_new, 0);
 
-	rb_define_method(RBK_Udis86, "set_mode", (ruby_method_t)Udis86_set_mode, 1);
-	rb_define_method(RBK_Udis86, "set_pc", (ruby_method_t)Udis86_set_pc, 1);
-	rb_define_method(RBK_Udis86, "set_syntax", (ruby_method_t)Udis86_set_syntax, 1);
-	rb_define_method(RBK_Udis86, "set_vendor", (ruby_method_t)Udis86_set_vendor, 1);
+	rb_define_method(RBK_Udis86, "input=", (ruby_method_t)Udis86_set_input, 1);
+
+	rb_define_method(RBK_Udis86, "mode=", (ruby_method_t)Udis86_set_mode, 1);
+	rb_define_method(RBK_Udis86, "pc=", (ruby_method_t)Udis86_set_pc, 1);
+	rb_define_method(RBK_Udis86, "syntax=", (ruby_method_t)Udis86_set_syntax, 1);
+	rb_define_method(RBK_Udis86, "vendor=", (ruby_method_t)Udis86_set_vendor, 1);
 	rb_define_method(RBK_Udis86, "next", (ruby_method_t)Udis86_next, 0);
 	rb_define_method(RBK_Udis86, "insn_len", (ruby_method_t)Udis86_insn_len, 0);
 	rb_define_method(RBK_Udis86, "insn_off", (ruby_method_t)Udis86_insn_off, 0);
