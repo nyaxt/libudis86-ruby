@@ -5,8 +5,8 @@ class Udis86
   def to_a
     ret = []
 
-    while u.next != 0
-      ret << u.insn_asm
+    while self.next != 0
+      ret << insn_asm
     end
 
     ret
