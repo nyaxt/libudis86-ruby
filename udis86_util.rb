@@ -1,6 +1,4 @@
-unless Udis86
-  require_relative './udis86'
-end
+require_relative './udis86'
 
 class Udis86
 
